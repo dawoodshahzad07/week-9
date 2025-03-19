@@ -1,0 +1,613 @@
+\documentclass[12pt,a4paper]{report}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{minted}
+\usepackage{tikz}
+\usepackage{pgf-umlcd}
+
+% Page geometry
+\geometry{
+    a4paper,
+    total={170mm,257mm},
+    left=20mm,
+    top=20mm,
+}
+
+% Colors
+\definecolor{javared}{rgb}{0.6,0,0}
+\definecolor{javagreen}{rgb}{0.25,0.5,0.35}
+\definecolor{javapurple}{rgb}{0.5,0,0.35}
+\definecolor{javacomment}{rgb}{0.5,0.5,0.5}
+
+% Listing style
+\lstset{
+    language=Java,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{javapurple}\bfseries,
+    stringstyle=\color{javared},
+    commentstyle=\color{javagreen},
+    morecomment=[s][\color{javacomment}]{/**}{*/},
+    numbers=left,
+    numberstyle=\tiny\color{black},
+    stepnumber=1,
+    numbersep=10pt,
+    tabsize=4,
+    showspaces=false,
+    showstringspaces=false,
+    frame=single,
+    breaklines=true
+}
+
+% Title formatting
+\titleformat{\chapter}[display]
+{\normalfont\huge\bfseries}{\chaptertitle}{20pt}{\Huge}
+
+\begin{document}
+
+\title{
+    {\Huge Gym Database Management System (GDMS)}\\
+    \large A Comprehensive Java-Based Solution
+}
+\author{Project Documentation}
+\date{\today}
+
+\maketitle
+\tableofcontents
+
+\chapter{Introduction}
+\section{Project Overview}
+The Gym Database Management System (GDMS) is a comprehensive software solution designed to manage gym operations efficiently. This system handles member management, equipment tracking, payment processing, and various other aspects of gym administration.
+
+\section{Objectives}
+\begin{itemize}
+    \item Streamline gym membership management
+    \item Automate payment processing and tracking
+    \item Monitor gym equipment maintenance
+    \item Provide secure authentication and authorization
+    \item Generate reports and analytics
+\end{itemize}
+
+\chapter{System Architecture}
+\section{Overview}
+The system follows a layered architecture pattern with clear separation of concerns:
+
+\begin{itemize}
+    \item Client Layer
+    \item Security Layer
+    \item Business Logic Layer
+    \item Domain Layer
+    \item Data Access Layer
+    \item Database Layer
+\end{itemize}
+
+\section{Technology Stack}
+\begin{itemize}
+    \item Java 17
+    \item Spring Security
+    \item MySQL Database
+    \item Hibernate ORM
+    \item JUnit 5
+    \item Maven
+\end{itemize}
+
+\chapter{Implementation}
+\section{Domain Models}
+
+\subsection{Member Class}
+\begin{lstlisting}[caption=Member.java]
+package com.gdms.model;
+
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import java.time.LocalDate;
+
+public class Member extends User {
+    private String membershipType;
+    private LocalDate membershipStartDate;
+    private LocalDate membershipEndDate;
+    private static final BCryptPasswordEncoder passwordEncoder = 
+        new BCryptPasswordEncoder();
+
+    public Member(String name, String email, String password, 
+                 String membershipType) {
+        super(name, email, passwordEncoder.encode(password));
+        this.membershipType = membershipType;
+        this.membershipStartDate = LocalDate.now();
+        this.membershipEndDate = membershipStartDate.plusMonths(1);
+    }
+
+    public boolean isMembershipActive() {
+        return LocalDate.now().isBefore(membershipEndDate);
+    }
+
+    public void renewMembership(int months) {
+        if (membershipEndDate.isBefore(LocalDate.now())) {
+            membershipStartDate = LocalDate.now();
+        } else {
+            membershipStartDate = membershipEndDate;
+        }
+        membershipEndDate = membershipStartDate.plusMonths(months);
+    }
+
+    @Override
+    public String getRole() {
+        return "MEMBER";
+    }
+
+    // Getters and setters
+    public String getMembershipType() {
+        return membershipType;
+    }
+
+    public void setMembershipType(String membershipType) {
+        this.membershipType = membershipType;
+    }
+
+    public LocalDate getMembershipStartDate() {
+        return membershipStartDate;
+    }
+
+    public LocalDate getMembershipEndDate() {
+        return membershipEndDate;
+    }
+}
+\end{lstlisting}
+
+\subsection{Equipment Class}
+\begin{lstlisting}[caption=Equipment.java]
+package com.gdms.model;
+
+import java.time.LocalDate;
+
+public class Equipment {
+    private int equipmentId;
+    private String name;
+    private String status;
+    private String location;
+    private String description;
+    private LocalDate lastMaintenanceDate;
+    private LocalDate nextMaintenanceDate;
+
+    public Equipment(int equipmentId, String name, String location, 
+                    String description) {
+        this.equipmentId = equipmentId;
+        this.name = name;
+        this.status = "Available";
+        this.location = location;
+        this.description = description;
+        this.lastMaintenanceDate = LocalDate.now();
+        this.nextMaintenanceDate = 
+            LocalDate.now().plusMonths(1);
+    }
+
+    public void performMaintenance() {
+        this.lastMaintenanceDate = LocalDate.now();
+        this.nextMaintenanceDate = 
+            LocalDate.now().plusMonths(1);
+        this.status = "Available";
+    }
+
+    public boolean isMaintenanceDue() {
+        return LocalDate.now().isAfter(nextMaintenanceDate);
+    }
+
+    public void reportIssue(String issue) {
+        this.status = "Maintenance Required: " + issue;
+    }
+
+    // Getters and setters
+    public int getEquipmentId() {
+        return equipmentId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public LocalDate getLastMaintenanceDate() {
+        return lastMaintenanceDate;
+    }
+
+    public LocalDate getNextMaintenanceDate() {
+        return nextMaintenanceDate;
+    }
+}
+\end{lstlisting}
+
+\subsection{Payment Class}
+\begin{lstlisting}[caption=Payment.java]
+package com.gdms.model;
+
+import java.time.LocalDateTime;
+
+public class Payment {
+    private int paymentId;
+    private int memberId;
+    private double amount;
+    private String status;
+    private String paymentMethod;
+    private String transactionId;
+    private LocalDateTime paymentDate;
+
+    public Payment(int paymentId, int memberId, double amount, 
+                  String paymentMethod) {
+        this.paymentId = paymentId;
+        this.memberId = memberId;
+        this.amount = amount;
+        this.paymentMethod = paymentMethod;
+        this.status = "Pending";
+        this.paymentDate = LocalDateTime.now();
+    }
+
+    public boolean processPayment(String transactionId) {
+        this.transactionId = transactionId;
+        this.status = "Completed";
+        return true;
+    }
+
+    public boolean refundPayment(String reason) {
+        if ("Completed".equals(this.status)) {
+            this.status = "Refunded: " + reason;
+            return true;
+        }
+        return false;
+    }
+
+    public String generateReceipt() {
+        return String.format("""
+            Receipt
+            --------
+            Payment ID: %d
+            Member ID: %d
+            Amount: $%.2f
+            Status: %s
+            Payment Method: %s
+            Transaction ID: %s
+            Date: %s
+            """,
+            paymentId, memberId, amount, status,
+            paymentMethod, transactionId, paymentDate);
+    }
+
+    // Getters and setters
+    public int getPaymentId() {
+        return paymentId;
+    }
+
+    public int getMemberId() {
+        return memberId;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public LocalDateTime getPaymentDate() {
+        return paymentDate;
+    }
+}
+\end{lstlisting}
+
+\chapter{Testing}
+\section{Unit Tests}
+
+\subsection{Member Tests}
+\begin{lstlisting}[caption=MemberTest.java]
+package com.gdms.model;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import java.time.LocalDate;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class MemberTest {
+    private Member member;
+
+    @BeforeEach
+    void setUp() {
+        member = new Member("John Doe", "john@example.com", 
+                          "password123", "Premium");
+    }
+
+    @Test
+    void testMemberCreation() {
+        assertNotNull(member);
+        assertEquals("John Doe", member.getName());
+        assertEquals("john@example.com", member.getEmail());
+        assertEquals("Premium", member.getMembershipType());
+        assertTrue(member.isMembershipActive());
+    }
+
+    @Test
+    void testAuthentication() {
+        assertTrue(member.authenticate("password123"));
+        assertFalse(member.authenticate("wrongpassword"));
+    }
+
+    @Test
+    void testMembershipActive() {
+        assertTrue(member.isMembershipActive());
+        // Set end date to yesterday
+        member.setMembershipEndDate(LocalDate.now().minusDays(1));
+        assertFalse(member.isMembershipActive());
+    }
+
+    @Test
+    void testRenewMembership() {
+        LocalDate originalEndDate = member.getMembershipEndDate();
+        member.renewMembership(3);
+        assertTrue(member.getMembershipEndDate().isAfter(originalEndDate));
+        assertEquals(3, member.getMembershipEndDate().getMonthValue() - 
+                       originalEndDate.getMonthValue());
+    }
+
+    @Test
+    void testGetRole() {
+        assertEquals("MEMBER", member.getRole());
+    }
+}
+\end{lstlisting}
+
+\subsection{Equipment Tests}
+\begin{lstlisting}[caption=EquipmentTest.java]
+package com.gdms.model;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import java.time.LocalDate;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class EquipmentTest {
+    private Equipment equipment;
+
+    @BeforeEach
+    void setUp() {
+        equipment = new Equipment(1, "Treadmill", "Cardio Area", 
+                                "Commercial Grade Treadmill");
+    }
+
+    @Test
+    void testEquipmentCreation() {
+        assertNotNull(equipment);
+        assertEquals(1, equipment.getEquipmentId());
+        assertEquals("Treadmill", equipment.getName());
+        assertEquals("Available", equipment.getStatus());
+        assertEquals("Cardio Area", equipment.getLocation());
+    }
+
+    @Test
+    void testPerformMaintenance() {
+        LocalDate oldMaintenanceDate = equipment.getLastMaintenanceDate();
+        equipment.performMaintenance();
+        assertTrue(equipment.getLastMaintenanceDate()
+                          .isAfter(oldMaintenanceDate));
+        assertEquals("Available", equipment.getStatus());
+    }
+
+    @Test
+    void testIsMaintenanceDue() {
+        assertFalse(equipment.isMaintenanceDue());
+        // Set next maintenance date to yesterday
+        equipment.setNextMaintenanceDate(LocalDate.now().minusDays(1));
+        assertTrue(equipment.isMaintenanceDue());
+    }
+
+    @Test
+    void testReportIssue() {
+        equipment.reportIssue("Motor problem");
+        assertEquals("Maintenance Required: Motor problem", 
+                    equipment.getStatus());
+    }
+}
+\end{lstlisting}
+
+\subsection{Payment Tests}
+\begin{lstlisting}[caption=PaymentTest.java]
+package com.gdms.model;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class PaymentTest {
+    private Payment payment;
+
+    @BeforeEach
+    void setUp() {
+        payment = new Payment(1, 1, 99.99, "Credit Card");
+    }
+
+    @Test
+    void testPaymentCreation() {
+        assertNotNull(payment);
+        assertEquals(1, payment.getPaymentId());
+        assertEquals(1, payment.getMemberId());
+        assertEquals(99.99, payment.getAmount());
+        assertEquals("Pending", payment.getStatus());
+        assertEquals("Credit Card", payment.getPaymentMethod());
+    }
+
+    @Test
+    void testProcessPayment() {
+        assertTrue(payment.processPayment("TXN123"));
+        assertEquals("Completed", payment.getStatus());
+        assertEquals("TXN123", payment.getTransactionId());
+    }
+
+    @Test
+    void testRefundPayment() {
+        payment.processPayment("TXN123");
+        assertTrue(payment.refundPayment("Customer request"));
+        assertTrue(payment.getStatus()
+                        .startsWith("Refunded: Customer request"));
+    }
+
+    @Test
+    void testGenerateReceipt() {
+        payment.processPayment("TXN123");
+        String receipt = payment.generateReceipt();
+        assertTrue(receipt.contains("Payment ID: 1"));
+        assertTrue(receipt.contains("Amount: $99.99"));
+        assertTrue(receipt.contains("Transaction ID: TXN123"));
+    }
+}
+\end{lstlisting}
+
+\chapter{Project Configuration}
+\section{Maven Configuration}
+\begin{lstlisting}[caption=pom.xml]
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+                           http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.gdms</groupId>
+    <artifactId>gym-management-system</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <!-- JUnit Jupiter for testing -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.9.2</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- MySQL Connector -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version>
+        </dependency>
+
+        <!-- Hibernate ORM -->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>6.2.7.Final</version>
+        </dependency>
+
+        <!-- Spring Security -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+            <version>6.1.2</version>
+        </dependency>
+
+        <!-- SLF4J API -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.7</version>
+        </dependency>
+
+        <!-- Logback Classic -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.4.8</version>
+        </dependency>
+
+        <!-- Apache Commons Logging -->
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>1.2</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                </configuration>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+\end{lstlisting}
+
+\chapter{Future Enhancements}
+\section{Planned Features}
+\begin{itemize}
+    \item Integration with fitness tracking devices
+    \item Mobile application development
+    \item Advanced analytics and reporting
+    \item Class scheduling system
+    \item Trainer management module
+    \item Nutrition tracking system
+\end{itemize}
+
+\section{Technical Improvements}
+\begin{itemize}
+    \item Implement caching with Redis
+    \item Add message queuing with RabbitMQ
+    \item Enhance security features
+    \item Implement real-time notifications
+    \item Add backup and disaster recovery
+\end{itemize}
+
+\chapter{Conclusion}
+The Gym Database Management System provides a robust solution for gym management needs. The system's modular architecture ensures scalability and maintainability, while comprehensive testing ensures reliability. Future enhancements will further improve the system's capabilities and user experience.
+
+\end{document} 
