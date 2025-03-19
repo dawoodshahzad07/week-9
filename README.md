@@ -45,7 +45,7 @@ src/
 ## Getting Started
 1. Clone this repository
 2. Open the project in your preferred IDE
-3. Build the project using Maven
+3. Build the project using Maven(command:``` mvn clean test ```)
 4. Run the tests to verify the implementation
 
 ## Development Guidelines
