@@ -69,7 +69,7 @@ src/
 
 2. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/gym-management-system.git
+   git clone https://github.com/dawoodshahzad07/gym-management-system.git
    cd gym-management-system
    ```
 
