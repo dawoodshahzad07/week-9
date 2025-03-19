@@ -69,8 +69,8 @@ src/
 
 2. Clone the repository:
    ```bash
-   git clone https://github.com/dawoodshahzad07/gym-management-system.git
-   cd gym-management-system
+   git clone https://github.com/dawoodshahzad07/week-9
+   cd week-9
    ```
 
 3. Build the project:
